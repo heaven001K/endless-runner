@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class LevelGenerator : MonoBehaviour
 {
-
+    [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private Transform[] levelPart;
 
     [SerializeField] private Vector3 nextPartPosition;
