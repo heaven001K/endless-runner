@@ -7,6 +7,14 @@ public class player : MonoBehaviour
     private Rigidbody2D rb;
 
     private Animator anim;
+    [Header("Sliding info")]
+    [SerializeField] private float slideSpeed;
+    [SerializeField] private float slideTime;
+    [SerializeField] private float slideCooldown;
+    private float slideCooldownTimer;
+    private bool isSliding;
+    private float slideTimeCounter;
+    
     
     [Header("Move info")]
     
@@ -23,6 +31,8 @@ public class player : MonoBehaviour
     [SerializeField] private float groundCheckDistance;
     [SerializeField] private Transform wallCheck;
     [SerializeField] private Vector2 wallSize;
+    [SerializeField] private float ceillingCheckDistance;
+    private bool ceilingDetected;
     private bool wallDetected;
     private bool isGrounded;
     void Start()
@@ -37,7 +47,11 @@ public class player : MonoBehaviour
     void Update()
 
     {
-        if (playerUnlocked && !wallDetected)
+        slideTimeCounter -= Time.deltaTime;
+        slideCooldownTimer -= Time.deltaTime;
+        
+        
+        if (playerUnlocked)
             Movement();
         if (isGrounded)
         {
@@ -45,6 +59,7 @@ public class player : MonoBehaviour
         }
             
         CheckCollision();
+        CheckForSlide();
         CheckInput();
         AnimatorsController();
         
@@ -52,7 +67,18 @@ public class player : MonoBehaviour
 
     private void Movement()
     {
-        rb.velocity = new Vector2(moveSpeed, rb.velocity.y);
+        if (wallDetected)
+        {
+            return;
+        }
+        if (isSliding)
+        {
+            rb.velocity = new Vector2(slideSpeed, rb.velocity.y);
+        }
+        else
+        {
+            rb.velocity = new Vector2(moveSpeed, rb.velocity.y);
+        }
     }
 
 
@@ -62,12 +88,37 @@ public class player : MonoBehaviour
         
         if (Input.GetKeyDown(KeyCode.Space))
             jumpButton();
-        
-        
+
+        if (Input.GetKeyDown(KeyCode.LeftShift) && isGrounded)
+        {
+            slideButton();
+            
+        }
+    }
+    private void CheckForSlide()
+    {
+        if (slideTimeCounter < 0 && !ceilingDetected)
+        {
+            isSliding = false;
+        }
+    }
+
+    private void slideButton()
+    {
+        if (rb.velocity.x != 0 && slideCooldownTimer < 0 )
+        {
+            isSliding = true;
+            slideTimeCounter = slideTime;
+            slideCooldownTimer = slideCooldown;
+        }
     }
 
     private void jumpButton()
     {
+        if (isSliding)
+        {
+            return;
+        }
         if (isGrounded)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
@@ -81,12 +132,16 @@ public class player : MonoBehaviour
 
     private void OnDrawGizmos(){
         Gizmos.DrawLine(transform.position,new Vector2(transform.position.x,transform.position.y - groundCheckDistance));
+        Gizmos.DrawLine(transform.position,new Vector2(transform.position.x,transform.position.y + ceillingCheckDistance)); 
         Gizmos.DrawWireCube(wallCheck.position,wallSize);
     }
     private void CheckCollision(){
         isGrounded = Physics2D.Raycast(transform.position,Vector2.down,groundCheckDistance,whatIsGround);
         wallDetected = Physics2D.BoxCast(wallCheck.position, wallSize,0,Vector2.zero,whatIsGround); 
+        ceilingDetected = Physics2D.Raycast(transform.position,Vector2.up,ceillingCheckDistance,whatIsGround);
     }
+
+
 
     private void AnimatorsController()
     {
@@ -94,8 +149,9 @@ public class player : MonoBehaviour
         anim.SetFloat("yVelocity", rb.velocity.y);
         anim.SetBool("isGrounded", isGrounded);
         anim.SetFloat("xVelocity", rb.velocity.x);
+        anim.SetBool("isSliding", isSliding);
+        
     }
-
 }
 
 
