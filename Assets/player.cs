@@ -1,12 +1,24 @@
 using System.Collections;
 using System.Collections.Generic;
+using Cinemachine;
 using UnityEngine;
 
-public class player : MonoBehaviour
+public class Player : MonoBehaviour
     {
     private Rigidbody2D rb;
 
     private Animator anim;
+    
+
+    [Header("Ledge info")]
+    [SerializeField] private Vector2 offset1;
+    [SerializeField] private Vector2 offset2;
+    private Vector2 climbBegunPosition;
+    private Vector2 climbAfterPosition;
+    private bool canGrabLedge = true;
+    private bool canClimb;
+    
+    
     [Header("Sliding info")]
     [SerializeField] private float slideSpeed;
     [SerializeField] private float slideTime;
@@ -35,6 +47,7 @@ public class player : MonoBehaviour
     private bool ceilingDetected;
     private bool wallDetected;
     private bool isGrounded;
+    [HideInInspector]public bool ledgeDetected;
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -59,9 +72,11 @@ public class player : MonoBehaviour
         }
             
         CheckCollision();
+        CheckForLedge();
         CheckForSlide();
         CheckInput();
         AnimatorsController();
+        
         
       }
 
@@ -130,6 +145,40 @@ public class player : MonoBehaviour
         }
     }
 
+    private void CheckForLedge()
+    {
+        if (canGrabLedge && ledgeDetected)
+        {
+            canGrabLedge = false;
+            
+            Vector2 ledgePosition = GetComponentInChildren<LedgeDetection>().transform.position;
+
+            climbBegunPosition = ledgePosition + offset1;
+            climbAfterPosition = ledgePosition + offset2;
+
+            canClimb = true;
+        }
+
+        if (canClimb)
+        {
+            transform.position = climbBegunPosition;
+        }
+    }
+
+    private void LedgeOver()
+    {
+        canClimb = false;
+        transform.position = climbAfterPosition;
+        Invoke("AllowLedgeGrab", .1f);
+    }
+    
+    private void AllowLedgeGrab()
+    {
+        canGrabLedge = true;
+    }
+
+    
+    
     private void OnDrawGizmos(){
         Gizmos.DrawLine(transform.position,new Vector2(transform.position.x,transform.position.y - groundCheckDistance));
         Gizmos.DrawLine(transform.position,new Vector2(transform.position.x,transform.position.y + ceillingCheckDistance)); 
@@ -139,6 +188,8 @@ public class player : MonoBehaviour
         isGrounded = Physics2D.Raycast(transform.position,Vector2.down,groundCheckDistance,whatIsGround);
         wallDetected = Physics2D.BoxCast(wallCheck.position, wallSize,0,Vector2.zero,whatIsGround); 
         ceilingDetected = Physics2D.Raycast(transform.position,Vector2.up,ceillingCheckDistance,whatIsGround);
+
+        
     }
 
 
@@ -150,6 +201,7 @@ public class player : MonoBehaviour
         anim.SetBool("isGrounded", isGrounded);
         anim.SetFloat("xVelocity", rb.velocity.x);
         anim.SetBool("isSliding", isSliding);
+        anim.SetBool("canClimb", canClimb);
         
     }
 }
