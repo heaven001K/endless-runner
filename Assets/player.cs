@@ -9,7 +9,14 @@ public class Player : MonoBehaviour
 
     private Animator anim;
     
-
+    [Header("Speed Info")]
+    [SerializeField] private float maxSpeed;
+    [SerializeField] private float milestoneIncreaser;
+    [SerializeField] private float speedMultiplier;
+    private float defaultSpeed;
+    private float defaultMilestoneIncreaser;
+    private float speedMilestone;
+    
     [Header("Ledge info")]
     [SerializeField] private Vector2 offset1;
     [SerializeField] private Vector2 offset2;
@@ -29,7 +36,6 @@ public class Player : MonoBehaviour
     
     
     [Header("Move info")]
-    
     [SerializeField] public float moveSpeed;
     [SerializeField] private float jumpForce;
     [SerializeField] private float doubleJumpForce;
@@ -53,6 +59,10 @@ public class Player : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         
+        speedMilestone = milestoneIncreaser;
+        defaultSpeed = moveSpeed;
+        defaultMilestoneIncreaser = milestoneIncreaser;
+        
     }
 
 
@@ -71,6 +81,8 @@ public class Player : MonoBehaviour
             canDoubleJump = true;
         }
             
+        
+        SpeedController();
         CheckCollision();
         CheckForLedge();
         CheckForSlide();
@@ -79,11 +91,37 @@ public class Player : MonoBehaviour
         
         
       }
+    private void SpeedController()
+    {
+        if (moveSpeed == maxSpeed)
+        {
+            return;
+        }
+        if (transform.position.x > speedMilestone)
+        {
+            speedMilestone += milestoneIncreaser;
+            moveSpeed *= speedMultiplier;
+            milestoneIncreaser  = milestoneIncreaser * speedMultiplier;
 
+            if (moveSpeed > maxSpeed)
+            {
+                moveSpeed = maxSpeed;
+            }
+
+
+        }
+        
+    }
+    private void SpeedReset()
+    {
+        moveSpeed = defaultSpeed;
+        milestoneIncreaser = defaultMilestoneIncreaser;
+    }
     private void Movement()
     {
         if (wallDetected)
         {
+            SpeedReset();
             return;
         }
         if (isSliding)
@@ -107,8 +145,9 @@ public class Player : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.LeftShift) && isGrounded)
         {
             slideButton();
-            
         }
+
+
     }
     private void CheckForSlide()
     {
@@ -150,7 +189,6 @@ public class Player : MonoBehaviour
         if (canGrabLedge && ledgeDetected)
         {
             canGrabLedge = false;
-            
             Vector2 ledgePosition = GetComponentInChildren<LedgeDetection>().transform.position;
 
             climbBegunPosition = ledgePosition + offset1;
@@ -202,7 +240,16 @@ public class Player : MonoBehaviour
         anim.SetFloat("xVelocity", rb.velocity.x);
         anim.SetBool("isSliding", isSliding);
         anim.SetBool("canClimb", canClimb);
+        if (rb.velocity.y < 20)
+        {
+            anim.SetBool("canRoll", true);
+        }
         
+    }
+
+    private void RollAnimationFinished()
+    {
+        anim.SetBool("canRoll", false);
     }
 }
 
