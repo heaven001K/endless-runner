@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Autodesk.Fbx;
 using Cinemachine;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class Player : MonoBehaviour
     {
@@ -11,7 +12,7 @@ public class Player : MonoBehaviour
     private SpriteRenderer sr;
 
     private bool isDead;
-    
+    private bool playerUnlocked;
     
     [Header("KnockBack Info")]
     [SerializeField] private Vector2 knockBackDir;
@@ -20,6 +21,7 @@ public class Player : MonoBehaviour
     
     
     [Header("Speed Info")]
+    [SerializeField] public float moveSpeed;
     [SerializeField] private float maxSpeed;
     [SerializeField] private float milestoneIncreaser;
     [SerializeField] private float speedMultiplier;
@@ -43,14 +45,12 @@ public class Player : MonoBehaviour
     private float slideCooldownTimer;
     private bool isSliding;
     private float slideTimeCounter;
-    
-    
-    [Header("Move info")]
-    [SerializeField] public float moveSpeed;
-    [SerializeField] private float jumpForce;
+
+
+    [Header("Jump Info")]
     [SerializeField] private float doubleJumpForce;
     private float defaultJumpForce;
-    private bool playerUnlocked;
+    [SerializeField] private float jumpForce;
     private bool canDoubleJump;
     
     
