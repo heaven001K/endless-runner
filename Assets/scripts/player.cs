@@ -111,7 +111,17 @@ public class Player : MonoBehaviour
         
       }
 
-
+    public void Damage()
+    {
+        if (moveSpeed >= maxSpeed)
+        {
+            KnockBack();
+        }
+        else
+        {
+            StartCoroutine(Die());
+        }
+    }
     private IEnumerator invincibility()
     {
         Color originalColor = sr.color;
@@ -142,7 +152,7 @@ public class Player : MonoBehaviour
         sr.color = originalColor;
         canBeKnocked = true;
     }
-    private void KnockedBack()
+    private void KnockBack()
     {
         if (!canBeKnocked)
         {
@@ -205,7 +215,7 @@ public class Player : MonoBehaviour
         
         
         if (Input.GetKeyDown(KeyCode.K) && isGrounded)
-            KnockedBack();
+            KnockBack();
         
         if (Input.GetKeyDown(KeyCode.O) && !isDead)
             StartCoroutine(Die());
