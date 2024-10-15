@@ -1,13 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
+using Autodesk.Fbx;
 using Cinemachine;
 using UnityEngine;
 
 public class Player : MonoBehaviour
     {
     private Rigidbody2D rb;
-
     private Animator anim;
+    private SpriteRenderer sr;
+
+    private bool isDead;
+    
+    
+    [Header("KnockBack Info")]
+    [SerializeField] private Vector2 knockBackDir;
+    private bool isKnocked;
+    private bool canBeKnocked = true;
+    
     
     [Header("Speed Info")]
     [SerializeField] private float maxSpeed;
@@ -58,10 +68,12 @@ public class Player : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
+        sr = GetComponent<SpriteRenderer>();
         
         speedMilestone = milestoneIncreaser;
         defaultSpeed = moveSpeed;
         defaultMilestoneIncreaser = milestoneIncreaser;
+
         
     }
 
@@ -72,8 +84,15 @@ public class Player : MonoBehaviour
     {
         slideTimeCounter -= Time.deltaTime;
         slideCooldownTimer -= Time.deltaTime;
-        
-        
+
+        if (isDead)
+        {
+            return;
+        }
+        if (isKnocked)
+        {
+            return;
+        }
         if (playerUnlocked)
             Movement();
         if (isGrounded)
@@ -91,6 +110,53 @@ public class Player : MonoBehaviour
         
         
       }
+
+
+    private IEnumerator invincibility()
+    {
+        Color originalColor = sr.color;
+        Color newColor = new Color(sr.color.r, sr.color.g, sr.color.b, 0.5f); // Adjusted alpha value
+
+        canBeKnocked = false;
+        sr.color = newColor;
+        yield return new WaitForSeconds(.1f);
+
+        sr.color = originalColor;
+        yield return new WaitForSeconds(.1f);
+
+        sr.color = newColor;
+        yield return new WaitForSeconds(.15f);
+
+        sr.color = originalColor;
+        yield return new WaitForSeconds(.15f);
+
+        sr.color = newColor;
+        yield return new WaitForSeconds(.25f);
+
+        sr.color = originalColor;
+        yield return new WaitForSeconds(.25f);
+
+        sr.color = newColor;
+        yield return new WaitForSeconds(.3f);
+
+        sr.color = originalColor;
+        canBeKnocked = true;
+    }
+    private void KnockedBack()
+    {
+        if (!canBeKnocked)
+        {
+            return;
+        }
+        StartCoroutine(invincibility());
+        isKnocked = true;
+        rb.velocity = knockBackDir;
+        
+    }
+    private void cancelKnockBack()
+    {
+        isKnocked = false;
+    }
     private void SpeedController()
     {
         if (moveSpeed == maxSpeed)
@@ -136,6 +202,14 @@ public class Player : MonoBehaviour
 
 
     private void CheckInput(){
+        
+        
+        if (Input.GetKeyDown(KeyCode.K) && isGrounded)
+            KnockedBack();
+        
+        if (Input.GetKeyDown(KeyCode.O) && !isDead)
+            StartCoroutine(Die());
+        
         if (Input.GetKeyDown(KeyCode.Mouse1))
             playerUnlocked = true;
         
@@ -149,6 +223,18 @@ public class Player : MonoBehaviour
 
 
     }
+
+    private IEnumerator Die()
+    {
+        isDead = true;
+        canBeKnocked = false;
+        rb.velocity = knockBackDir;
+        anim.SetBool("isDead", true);
+
+        yield return new WaitForSeconds(.5f);
+        rb.velocity = new Vector2(0, 0);
+    }
+
     private void CheckForSlide()
     {
         if (slideTimeCounter < 0 && !ceilingDetected)
@@ -234,12 +320,14 @@ public class Player : MonoBehaviour
 
     private void AnimatorsController()
     {
+        
         anim.SetBool("canDoubleJump", canDoubleJump);
         anim.SetFloat("yVelocity", rb.velocity.y);
         anim.SetBool("isGrounded", isGrounded);
         anim.SetFloat("xVelocity", rb.velocity.x);
         anim.SetBool("isSliding", isSliding);
         anim.SetBool("canClimb", canClimb);
+        anim.SetBool("isKnocked", isKnocked);
         if (rb.velocity.y < 20)
         {
             anim.SetBool("canRoll", true);
