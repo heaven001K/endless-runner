@@ -243,6 +243,8 @@ public class Player : MonoBehaviour
 
         yield return new WaitForSeconds(.5f);
         rb.velocity = new Vector2(0, 0);
+        yield return new WaitForSeconds(.5f);
+        GameManager.instance.RestartLevel();
     }
 
     private void CheckForSlide()
