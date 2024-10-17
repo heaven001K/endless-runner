@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MovingTrap : trap
@@ -10,8 +11,13 @@ public class MovingTrap : trap
     [SerializeField] private Transform[] movePoints;
     private int i;
 
-    private void Start() => transform.position = movePoints[0].position;
-
+    //private void Start() => transform.position = movePoints[0].position;
+    protected override void Start()
+    {
+        base.Start();
+        transform.position = movePoints[0].position;
+        
+    }
     private void Update()
     {
         transform.position = Vector3.MoveTowards(transform.position, movePoints[i].position, speed * Time.deltaTime);
